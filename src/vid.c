@@ -8,6 +8,7 @@
 18 controlRegister // NOTE: QEMU emulated PL110 CR is at 0x18
 ********************************************************/
 #include <stdint.h>
+#include <stdarg.h>
 
 #include "defines.h"
 #include "vid.h"
@@ -223,29 +224,68 @@ int kprinti(int x) {
     kprintu(x);
 }
 
-int kprintf(char *fmt,...) {
-    int *ip;
-    char *cp;
-    cp = fmt;
-    ip = (int *)&fmt + 1;
-    while(*cp){
-        if (*cp != '%'){
+// int kprintf(char *fmt,...) {
+//     int *ip;
+//     char *cp;
+//     cp = fmt;
+//     ip = (int *)&fmt + 1;
+//     while(*cp){
+//         if (*cp != '%'){
+//             kputc(*cp);
+//             if (*cp=='\n')
+//                 kputc('\r');
+//             cp++;
+//             continue;
+//         }
+//         cp++;
+//         switch(*cp){
+//             case 'c': kputc((char)*ip); break;
+//             case 's': kprints((char *)*ip); break;
+//             case 'd': kprinti(*ip); break;
+//             case 'u': kprintu(*ip); break;
+//             case 'x': kprintx(*ip); break;
+//         }
+//         cp++; ip++;
+//     }
+// }
+
+int kprintf(char *fmt, ...){
+    va_list args;
+    va_start(args, fmt);
+
+    char *cp = fmt;
+
+    while (*cp) {
+        if (*cp != '%') {
             kputc(*cp);
-            if (*cp=='\n')
+            if (*cp == '\n')
                 kputc('\r');
             cp++;
             continue;
         }
         cp++;
-        switch(*cp){
-            case 'c': kputc((char)*ip); break;
-            case 's': kprints((char *)*ip); break;
-            case 'd': kprinti(*ip); break;
-            case 'u': kprintu(*ip); break;
-            case 'x': kprintx(*ip); break;
+        switch (*cp) {
+            case 'c':
+                kputc(va_arg(args, int));
+                break;
+            case 's':
+                kprints(va_arg(args, char *));
+                break;
+            case 'd':
+                kprinti(va_arg(args, int));
+                break;
+            case 'u':
+                kprintu(va_arg(args, int));
+                break;
+            case 'x':
+                kprintx(va_arg(args, int));
+                break;
         }
-        cp++; ip++;
+        cp++;
     }
+
+    va_end(args);
+    return 0;
 }
 
 int show_bmp(char *p, int start_row, int start_col){// SAME as before
